@@ -1,6 +1,8 @@
-import { MAX_IMAGE_WIDTH } from '../../shared/constants';
+import {MAX_IMAGE_WIDTH} from '../../shared/constants';
+import {validateImage} from './validate';
 
 export async function preprocessImage(blob: Blob): Promise<OffscreenCanvas> {
+  await validateImage(blob);
   const bitmap = await createImageBitmap(blob);
   // Inventory labels are small. Enlarging them before thresholding retains
   // enough Chinese glyph detail for the local OCR model.
@@ -9,9 +11,9 @@ export async function preprocessImage(blob: Blob): Promise<OffscreenCanvas> {
   const height = Math.max(1, Math.round(bitmap.height * scale));
   const canvas = new OffscreenCanvas(width, height);
   const context = canvas.getContext('2d', { willReadFrequently: true });
-  if (!context) throw new Error('无法初始化图片处理画布');
-  context.drawImage(bitmap, 0, 0, width, height);
-  bitmap.close();
+  if (!context) { bitmap.close(); throw new Error('无法初始化图片处理画布'); }
+  try { context.drawImage(bitmap, 0, 0, width, height); }
+  finally { bitmap.close(); }
   const image = context.getImageData(0, 0, width, height);
   for (let index = 0; index < image.data.length; index += 4) {
     const red = image.data[index];

@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
   "name": "PlatVault",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "识别 Warframe 仓库截图并查询物品白金价格。",
   "permissions": ["storage"],
-  "host_permissions": ["https://api.warframe.market/*", "https://warframe.market/static/assets/*"],
+  "host_permissions": ["https://api.warframe.market/*", "https://raw.githubusercontent.com/*"],
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   },

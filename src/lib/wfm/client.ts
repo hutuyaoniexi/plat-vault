@@ -1,15 +1,17 @@
-import { CATALOG_TTL_MS } from '../../shared/constants';
-import { getLocal, setLocal } from '../storage/localStore';
-import { toCatalogItem } from './catalog';
-import { RateLimiter } from './rateLimiter';
-import type { CatalogItem, MarketOrder, MarketProvider } from './types';
+import {CATALOG_TTL_MS, MAX_RETRY_AFTER_MS} from '../../shared/constants';
+import {fetchWithTimeout} from '../fetchWithTimeout';
+import {getLocal, setLocal} from '../storage/localStore';
+import {toCatalogItem} from './catalog';
+import {RateLimiter} from './rateLimiter';
+import {retryAfterDelay} from './retryAfter';
+import type {CatalogItem, MarketOrder} from './types';
 
 const BASE_URL = import.meta.env.DEV ? '/wfm-api/v2' : 'https://api.warframe.market/v2';
 const CATALOG_CACHE_KEY = 'wfm-catalog-v2';
 interface CachedCatalog { fetchedAt: number; items: CatalogItem[]; }
 interface WfmResponse<T> { data: T; }
 
-export class WfmClient implements MarketProvider {
+export class WfmClient {
   private readonly queue = new RateLimiter();
   private readonly orderRequests = new Map<string, Promise<MarketOrder[]>>();
 
@@ -41,10 +43,9 @@ export class WfmClient implements MarketProvider {
       for (let attempt = 0; attempt < 3; attempt += 1) {
         let retryDelay = 400 * (2 ** attempt);
         try {
-          const response = await fetch(`${BASE_URL}${path}`, { signal, headers: { Accept: 'application/json', Language: 'zh-hans', Platform: 'pc', Crossplay: 'true' } });
+          const response = await fetchWithTimeout(`${BASE_URL}${path}`, { signal, headers: { Accept: 'application/json', Language: 'zh-hans', Platform: 'pc', Crossplay: 'true' } });
           if (response.status === 429) {
-            const seconds = Number(response.headers.get('Retry-After'));
-            retryDelay = Number.isFinite(seconds) ? seconds * 1000 : 2_000 * (attempt + 1);
+            retryDelay = Math.min(MAX_RETRY_AFTER_MS, retryAfterDelay(response.headers.get('Retry-After')) ?? 2_000 * (attempt + 1));
             this.queue.deferFor(retryDelay);
             lastError = new Error('warframe.market 请求过于频繁，正在退避重试');
           } else if (response.ok) return await response.json() as T;
@@ -55,7 +56,7 @@ export class WfmClient implements MarketProvider {
           if (error instanceof Error && error.name === 'NonRetryableError') throw error;
           lastError = error instanceof Error ? error : new Error('网络请求失败');
         }
-        await new Promise<void>((resolve) => setTimeout(resolve, retryDelay));
+        if (attempt < 2) await new Promise<void>((resolve) => setTimeout(resolve, retryDelay));
       }
       throw lastError ?? new Error('请求失败');
     }, signal);
