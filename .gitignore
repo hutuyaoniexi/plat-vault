@@ -1,0 +1,6 @@
+node_modules/
+dist/
+*.tsbuildinfo
+/.idea/
+/docs/PlatVault_V0.1_Codex_Development_Spec.md
+/plat-vault.iml
