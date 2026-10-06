@@ -1,7 +1,7 @@
 {
   "name": "plat-vault",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,8 +11,6 @@
     "prepare:ocr-assets": "mkdir -p public/ocr && cp node_modules/tesseract.js/dist/worker.min.js public/ocr/ && cp node_modules/tesseract.js-core/tesseract-core.wasm.js node_modules/tesseract.js-core/tesseract-core.wasm public/ocr/"
   },
   "dependencies": {
-    "@types/chrome": "^0.0.306",
-    "@vitejs/plugin-react": "^4.4.1",
     "fuse.js": "^7.1.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -20,8 +18,10 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",
+    "@types/chrome": "^0.0.306",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.4.1",
     "eslint": "^9.30.1",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
@@ -29,6 +29,6 @@
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.35.1",
     "vite": "^6.3.5",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.11"
   }
 }

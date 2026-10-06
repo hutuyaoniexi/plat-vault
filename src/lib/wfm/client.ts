@@ -9,7 +9,21 @@ import type {CatalogItem, MarketOrder} from './types';
 const BASE_URL = import.meta.env.DEV ? '/wfm-api/v2' : 'https://api.warframe.market/v2';
 const CATALOG_CACHE_KEY = 'wfm-catalog-v2';
 interface CachedCatalog { fetchedAt: number; items: CatalogItem[]; }
-interface WfmResponse<T> { data: T; }
+function responseArray(value: unknown): unknown[] {
+  if (typeof value !== 'object' || value === null || !('data' in value) || !Array.isArray(value.data)) {
+    throw new Error('warframe.market 返回了无法识别的数据格式');
+  }
+  return value.data;
+}
+
+function isMarketOrder(value: unknown): value is MarketOrder {
+  if (typeof value !== 'object' || value === null) return false;
+  const order = value as Record<string, unknown>;
+  return typeof order.id === 'string'
+    && (order.type === 'buy' || order.type === 'sell')
+    && typeof order.platinum === 'number' && Number.isFinite(order.platinum)
+    && typeof order.user === 'object' && order.user !== null;
+}
 
 export class WfmClient {
   private readonly queue = new RateLimiter();
@@ -19,9 +33,10 @@ export class WfmClient {
     const cached = await getLocal<CachedCatalog>(CATALOG_CACHE_KEY);
     if (cached && !forceRefresh && Date.now() - cached.fetchedAt < CATALOG_TTL_MS) return cached.items;
     try {
-      const response = await this.request<WfmResponse<unknown[]>>('/items');
-      const items = response.data.map((item) => toCatalogItem(item as Parameters<typeof toCatalogItem>[0])).filter((item): item is CatalogItem => item !== null);
-      await setLocal(CATALOG_CACHE_KEY, { fetchedAt: Date.now(), items });
+      const response = await this.request<unknown>('/items');
+      const items = responseArray(response).map(toCatalogItem).filter((item): item is CatalogItem => item !== null);
+      try { await setLocal(CATALOG_CACHE_KEY, { fetchedAt: Date.now(), items }); }
+      catch { /* A full or unavailable local cache must not discard fresh catalog data. */ }
       return items;
     } catch (error) {
       if (cached) return cached.items;
@@ -32,7 +47,7 @@ export class WfmClient {
   getOrders(slug: string, signal?: AbortSignal): Promise<MarketOrder[]> {
     const existing = this.orderRequests.get(slug);
     if (existing) return existing;
-    const request = this.request<WfmResponse<MarketOrder[]>>(`/orders/item/${encodeURIComponent(slug)}`, signal).then((response) => response.data).finally(() => this.orderRequests.delete(slug));
+    const request = this.request<unknown>(`/orders/item/${encodeURIComponent(slug)}`, signal).then((response) => responseArray(response).filter(isMarketOrder)).finally(() => this.orderRequests.delete(slug));
     this.orderRequests.set(slug, request);
     return request;
   }

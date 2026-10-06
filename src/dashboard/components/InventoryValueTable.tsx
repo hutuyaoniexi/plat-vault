@@ -1,7 +1,6 @@
 import {useState} from 'react';
+import {DEFAULT_DUCATS_PER_PLATINUM} from '../../shared/constants';
 import type {ValuedInventoryItem} from '../../shared/types';
-
-const DEFAULT_DUCATS_PER_PLATINUM = 8;
 
 export function InventoryValueTable({ items }: { items: ValuedInventoryItem[] }) {
   const [ducatsPerPlatinum, setDucatsPerPlatinum] = useState(DEFAULT_DUCATS_PER_PLATINUM);

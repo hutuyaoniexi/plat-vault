@@ -1,3 +1,5 @@
+import {DEFAULT_DUCATS_PER_PLATINUM} from '../../shared/constants';
+
 export type Era = 'Lith' | 'Meso' | 'Neo' | 'Axi';
 export type Refinement = 'Intact' | 'Exceptional' | 'Flawless' | 'Radiant';
 export type Recommendation = 'bulk_sell' | 'forma' | 'radshare' | 'wfm_sell';
@@ -13,4 +15,4 @@ export interface RelicAnalysis {
   relicMarketPrice: number | null; reason: string;
 }
 
-export const defaultAnalysisSettings: AnalysisSettings = { ducatsPerPlatinum: 8, rareValueThreshold: 20, decisionBuffer: 0.15 };
+export const defaultAnalysisSettings: AnalysisSettings = { ducatsPerPlatinum: DEFAULT_DUCATS_PER_PLATINUM, rareValueThreshold: 20, decisionBuffer: 0.15 };

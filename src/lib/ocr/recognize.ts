@@ -15,8 +15,8 @@ export class OcrService {
     return this.recognizeResult(imageId, blob, onProgress).then((result) => result.entries);
   }
 
-  recognizeTextWithLines(imageId: string, blob: Blob, onProgress: (progress: number, status: string) => void): Promise<{ text: string; lines: OcrLine[] }> {
-    return this.recognizeResult(imageId, blob, onProgress, 'relic').then(({ text, lines }) => ({ text, lines }));
+  recognizeTextWithLines(imageId: string, blob: Blob, onProgress: (progress: number, status: string) => void, mode?: 'relic' | 'riven'): Promise<{ text: string; lines: OcrLine[] }> {
+    return this.recognizeResult(imageId, blob, onProgress, mode).then(({ text, lines }) => ({ text, lines }));
   }
 
   private getWorker(): Worker {
@@ -48,7 +48,7 @@ export class OcrService {
     return worker;
   }
 
-  private recognizeResult(imageId: string, blob: Blob, onProgress: (progress: number, status: string) => void, mode?: 'relic'): Promise<{ entries: RawInventoryEntry[]; text: string; lines: OcrLine[] }> {
+  private recognizeResult(imageId: string, blob: Blob, onProgress: (progress: number, status: string) => void, mode?: 'relic' | 'riven'): Promise<{ entries: RawInventoryEntry[]; text: string; lines: OcrLine[] }> {
     return new Promise((resolve, reject) => {
       try {
         const worker = this.getWorker();

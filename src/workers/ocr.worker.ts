@@ -67,7 +67,50 @@ async function recognizeRelicLabels(tesseract: Awaited<ReturnType<typeof createW
   return [...lines.filter((line) => quantityPattern.test(line.text.trim())), ...labels];
 }
 
-async function recognize(imageId: string, blob: Blob, mode?: 'relic'): Promise<void> {
+async function recognizeRivenTitles(tesseract: Awaited<ReturnType<typeof createWorker>>, canvas: OffscreenCanvas, lines: OcrResult['lines']): Promise<OcrResult['lines']> {
+  // Sparse-text mode can split the Riven title into unrelated fragments. A
+  // page-layout pass usually restores the title and stat rows as complete lines.
+  await tesseract.setParameters({ tessedit_pageseg_mode: PSM.SINGLE_BLOCK });
+  const {data: layoutData} = await tesseract.recognize(canvas, {}, {blocks:true});
+  const layoutLines = (layoutData.blocks ?? []).flatMap((block) => block.paragraphs.flatMap((paragraph) => paragraph.lines)).map((line) => ({text:line.text,bbox:line.bbox}));
+  const allLines = [...layoutLines, ...lines];
+  const looksLikeRivenTitle = (line: OcrResult['lines'][number]) => /[\u4e00-\u9fff]/.test(line.text) && /[a-z]{2,}\s*[-:：]/i.test(line.text);
+  const layoutCandidates = layoutLines.filter((line) => line.bbox && looksLikeRivenTitle(line));
+  const candidates = (layoutCandidates.length ? layoutCandidates : lines.filter((line) => line.bbox && looksLikeRivenTitle(line))).slice(0, 2);
+  const titles: OcrResult['lines'] = [];
+  await tesseract.setParameters({ tessedit_pageseg_mode: PSM.SINGLE_BLOCK });
+  try {
+    for (const line of candidates) {
+      const {x0,x1,y0,y1} = line.bbox!;
+      // A close-up gives a tight title box; a full game screenshot may return
+      // a box spanning the whole row, so use the centered selected-card band.
+      const spansScreen = x1-x0 > canvas.width*.85;
+      const crop = spansScreen
+        ? {left:Math.round(canvas.width*.273),top:y0,width:Math.round(canvas.width*.532),height:Math.round(canvas.height*.1)}
+        : {left:Math.max(0,Math.round(x0-canvas.width*.012)),top:Math.max(0,Math.round(y0-canvas.height*.01)),width:Math.min(canvas.width-Math.max(0,Math.round(x0-canvas.width*.012)),Math.round(x1-x0+canvas.width*.02)),height:Math.min(canvas.height-Math.max(0,Math.round(y0-canvas.height*.01)),Math.round(y1-y0+canvas.height*.075))};
+      for (const [dx,dy,dw,dh] of [[0,0,0,0],[1,-1,0,-1],[-4,0,8,0],[4,0,-8,0],[0,-4,0,8],[0,4,0,-8]]) {
+        const left = Math.max(0,Math.min(canvas.width-1,crop.left+dx));
+        const cropTop = Math.max(0,Math.min(canvas.height-1,crop.top+dy));
+        const width = Math.max(1,Math.min(canvas.width-left,crop.width+dw));
+        const height = Math.max(1,Math.min(canvas.height-cropTop,crop.height+dh));
+        const {data} = await tesseract.recognize(canvas, {rectangle:{left,top:cropTop,width,height}});
+        for (const text of data.text.split('\n').map((value) => value.trim()).filter((value) => /[\u4e00-\u9fff]/.test(value))) titles.push({text});
+      }
+    }
+    const rankLine = allLines.filter((line) => line.bbox && /段位/.test(line.text)).sort((a,b) => (a.bbox!.x1-a.bbox!.x0)-(b.bbox!.x1-b.bbox!.x0))[0];
+    if (rankLine?.bbox) {
+      const left = Math.min(canvas.width - 1, rankLine.bbox.x1 + 430);
+      const top = Math.max(0, rankLine.bbox.y0 - 55);
+      await tesseract.setParameters({tessedit_pageseg_mode: PSM.SINGLE_LINE, tessedit_char_whitelist: '0123456789'});
+      const {data} = await tesseract.recognize(canvas, {rectangle:{left,top,width:Math.min(190,canvas.width-left),height:100}});
+      const count = data.text.match(/\d{1,3}/)?.[0];
+      if (count) titles.push({text:`rerolls ${count}`});
+    }
+  } finally { await tesseract.setParameters({tessedit_pageseg_mode: PSM.SPARSE_TEXT, tessedit_char_whitelist: ''}); }
+  return [...titles, ...layoutLines, ...lines];
+}
+
+async function recognize(imageId: string, blob: Blob, mode?: 'relic' | 'riven'): Promise<void> {
   try {
     const canvas = await preprocessImage(blob);
     const tesseract = await getWorker();
@@ -81,8 +124,11 @@ async function recognize(imageId: string, blob: Blob, mode?: 'relic'): Promise<v
       isRelicLabelPass = true;
       try { relicLines = await recognizeRelicLabels(tesseract, canvas, lines); }
       finally { isRelicLabelPass = false; }
+    } else if (mode === 'riven') {
+      self.postMessage({ type: 'progress', imageId, progress: 0.9, status: '正在核对紫卡名称' } satisfies OcrWorkerResponse);
+      relicLines = await recognizeRivenTitles(tesseract, canvas, lines);
     }
-    const text = mode === 'relic' ? relicLines.filter((line) => !quantityPattern.test(line.text.trim())).map((line) => line.text).join('\n') : data.text;
+    const text = mode === 'relic' || mode === 'riven' ? relicLines.filter((line) => !quantityPattern.test(line.text.trim())).map((line) => line.text).join('\n') : data.text;
     const entries = mode === 'relic' ? undefined : parseInventory(result, imageId);
     self.postMessage({ type: 'result', imageId, entries, text, lines: relicLines } satisfies OcrWorkerResponse);
   } catch (error) {

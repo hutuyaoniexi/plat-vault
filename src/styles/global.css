@@ -36,3 +36,45 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.25rem); letter-spacing: -.045em; }
 @media (max-width: 850px) { .result-grid { grid-template-columns: 1fr; } }
 @media (max-width: 700px) { .dashboard { padding: 24px 14px; }.hero { display: block; }.brand-title { gap: 9px; }.brand-title > span { font-size: .9rem; } }
 @media (max-width: 600px) { .module-actions button { flex: 1 1 calc(50% - 5px); } }
+.riven-layout { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 16px; align-items: start; }
+.riven-input, .riven-result { display: grid; gap: 14px; }
+.riven-input > h2 { margin: 0; }
+.riven-ocr { max-height: 180px; overflow: auto; white-space: pre-wrap; color: #aebbd2; }
+@media (max-width: 900px) { .riven-layout { grid-template-columns: 1fr; } }
+.riven-layout.has-result { grid-template-columns: minmax(0,1fr); }
+.current-riven-traits { display: grid; gap: 8px; }
+.current-riven-goal { display: inline-flex; align-items: center; width: fit-content; max-width: 100%; padding: 4px 8px; border-radius: 999px; background: #3e3027; color: #f0c18a; font-size: .74rem; line-height: 1.25; white-space: nowrap; }
+.current-riven-goal.matched { background: #1f3c31; color: #88e0a6; }
+.current-riven-trait.is-graduated > span:first-child { color: #88e0a6; }
+.current-riven-trait.is-not-graduated > span:first-child { color: #f09a9a; }
+.current-riven-trait.is-not-graduated .current-riven-goal { background: #48272d; color: #f09a9a; }
+.riven-cap-note { display: block; margin-top: 10px; color: #8294af; font-size: .76rem; line-height: 1.45; }
+.current-riven-trait { display: grid; grid-template-columns: minmax(90px,1fr) auto auto; align-items: center; gap: 8px; min-height: 48px; padding: 10px 12px; border: 1px solid #2b4064; border-radius: 8px; background: #122039; font-size: .9rem; }
+.riven-detail-row { display: grid; grid-template-columns: minmax(300px, 1.2fr) minmax(260px, 1fr); gap: 14px; align-items: stretch; }
+.riven-current-panel, .riven-weapon-analysis { min-width: 0; padding: 12px; border: 1px solid #2b4064; border-radius: 9px; background: #0d192d; }
+.riven-weapon-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.riven-weapon-summary > div { display: grid; gap: 6px; min-width: 0; padding: 12px; border: 1px solid #2b4064; border-radius: 9px; background: #0d192d; }
+.riven-weapon-summary span { color: #aebbd2; font-size: .82rem; }
+.riven-weapon-summary strong { overflow-wrap: anywhere; color: #e8edf8; font-size: 1rem; }
+.riven-retention strong { font-size: 1.1rem; }
+.riven-retention > strong { align-self: end; }
+.riven-retention small { color: #c4d2e7; line-height: 1.45; }
+.riven-retention.retention-good strong { color: #88e0a6; }
+.riven-retention.retention-neutral strong { color: #ffd579; }
+.riven-retention.retention-low strong { color: #f09a9a; }
+.riven-current-panel > h3, .riven-weapon-analysis > summary { margin: 0 0 8px; color: #b9cce7; font-size: .95rem; font-weight: 700; line-height: 1.2; }
+.riven-weapon-analysis > summary { cursor: pointer; }
+.riven-lock-recommendation { display: grid; gap: 6px; padding: 12px; border: 1px solid #2b4064; border-radius: 9px; background: #0d192d; }
+.riven-lock-recommendation > strong { color: #ffd579; font-size: 1.08rem; }
+.riven-lock-recommendation > strong.is-recommended { color: #88e0a6; }
+.riven-lock-recommendation p { margin: 0; color: #c4d2e7; font-size: .9rem; line-height: 1.5; }
+.riven-weapon-analysis > p { color: #c4d2e7; font-size: .9rem; }
+@media (max-width: 980px) { .riven-detail-row { grid-template-columns: minmax(0, 1fr); }.riven-weapon-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .riven-weapon-summary { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 760px) { .current-riven-trait { grid-template-columns: minmax(0,1fr) auto auto; }.current-riven-goal { grid-column: 1 / -1; } }
+.trait-score { padding: 4px 9px; border-radius: 999px; font-size: .82rem; white-space: nowrap; }
+.score-S { color: #ffd579; background: #493a20; }
+.score-A { color: #a9e6bd; background: #1f3c31; }
+.score-B { color: #92d6ef; background: #1d3a4a; }
+.score-C { color: #c2c9d7; background: #30394a; }
+.score-D { color: #f0a4a4; background: #48272d; }

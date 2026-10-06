@@ -124,7 +124,7 @@ export function WalnutAnalysis({ screenshots, startKey, onProgress, onComplete, 
       for (const [index, screenshot] of screenshots.entries()) {
         onProgress(screenshot.id, 0, `截图 ${index + 1}/${screenshots.length}：准备识别`);
         try {
-          const { text, lines } = await service.recognizeTextWithLines(screenshot.id, screenshot.file, (percentage, stage) => onProgress(screenshot.id, percentage * 0.75, `截图 ${index + 1}/${screenshots.length}：${stage}`));
+          const { text, lines } = await service.recognizeTextWithLines(screenshot.id, screenshot.file, (percentage, stage) => onProgress(screenshot.id, percentage * 0.75, `截图 ${index + 1}/${screenshots.length}：${stage}`), 'relic');
           recognizedScreenshotIds.push(screenshot.id);
           parsed.push(...parseRelics(text, screenshot.id, lines));
           onProgress(screenshot.id, 0.75, '核桃识别完成');
